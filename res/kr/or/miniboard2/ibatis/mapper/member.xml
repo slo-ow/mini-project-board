@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap      
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"      
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="member">
+	<typeAlias alias="member" type="kr.or.miniboard2.member.vo.MemberVo" />
+
+	<sql id="selectAll">
+		SELECT *
+		FROM MEMBER
+	</sql>
+
+	<!-- java.util.Map 이지만 자체적으로 typeAlias로 map으로 지정 되어 있다 -->
+	<select id="selectMember" parameterClass="map" resultClass="member">
+		SELECT *
+		FROM MEMBER
+		WHERE MEM_ID = #mem_id#
+		<dynamic prepend="AND">
+			<isNotEmpty property="mem_pass">
+				MEM_PASS = #mem_pass#
+			</isNotEmpty>
+		</dynamic>
+	</select>
+
+	<!-- 멤버조회 -->
+	<select id="memberList" resultClass="member">
+		<include refid="selectAll" />
+	</select>
+	
+	<!-- 회원가입 -->
+	<insert id="insertMember" parameterClass="member">
+		INSERT INTO MEMBER		
+		VALUES(
+		#mem_id#
+		,#mem_pass#
+		,#mem_name#
+		,#mem_sex#
+		,#mem_mail#
+		,#mem_addr1#
+		,#mem_addr2#
+		,#mem_bir#
+		,#mem_phone#
+		,default
+		)
+		<selectKey resultClass="string">
+			SELECT MEM_NAME
+			FROM MEMBER
+			WHERE MEM_ID = #mem_id#
+		</selectKey>
+	</insert>
+	
+<!-- 
+	<update id="updateMemberInfoe" parameterClass="member">
+		UPDATE MEMBER
+		SET MEM_NAME = #mem_name#
+		,MEM_JOB = #mem_job#
+		WHERE MEM_ID = #mem_id#
+	</update>
+
+	<delete id="deleteMemberInfo" parameterClass="map">
+		DELETE FROM MEMBER
+		WHERE MEM_ID=#mem_id#
+	</delete>
+
+	
+ -->
+</sqlMap>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMapConfig      
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map Config 2.0//EN"      
+    "http://ibatis.apache.org/dtd/sql-map-config-2.dtd">
+<sqlMapConfig>
+	<properties resource="/kr/or/miniboard2/ibatis/SqlMapConfig.properties" />
+	<settings cacheModelsEnabled="true" enhancementEnabled="true"
+		lazyLoadingEnabled="true" maxRequests="32" maxSessions="10"
+		maxTransactions="5" useStatementNamespaces="true" />
+	<transactionManager type="JDBC">
+		<dataSource type="SIMPLE">
+			<property name="JDBC.Driver" value="${driver}" />
+			<property name="JDBC.ConnectionURL" value="${url}" />
+			<property name="JDBC.Username" value="${username}" />
+			<property name="JDBC.Password" value="${password}" />
+		</dataSource>
+	</transactionManager>
+	<sqlMap resource="/kr/or/miniboard2/ibatis/mapper/member.xml" />
+	<sqlMap resource="/kr/or/miniboard2/ibatis/mapper/board.xml" /> 
+	<sqlMap resource="/kr/or/miniboard2/ibatis/mapper/fileinfo.xml" /> 
+
+
+</sqlMapConfig>
+
+
+<!-- ********************************************************** [필독] XML 
+	사용시 주의사항 1. 첫번째 라인을 띄우지 않는다. 있는 설정을 건드리지 말것. 2. 현재의 파일에서 수정해야 할 부분은 <sqlMap 
+	resource /> 부분이다. 다른 부분을 건드리면 오류 발생할 수 있음. ********************************************************** 
+	java JDBC : autoCommit(false)으로 트랜잭션 처리 autoCommit(false)-commit() -rollback() 
+	iBatis JDBC : auto transaction으로 트랜잭션 처리. iBatis는 모든 쿼리를 트랜잭션 단위로 처리. 로컬 
+	트랜잭션 처리 startTransaction(); commitTransaction(); endTransaction(); -->
+
+   

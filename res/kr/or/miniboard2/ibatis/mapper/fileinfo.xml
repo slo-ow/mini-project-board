@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap
+PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+"http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="fileinfo">
+	<typeAlias alias="fileinfovo" type="kr.or.miniboard2.file.vo.FileInfoVo"/>
+	
+	<!-- 다중파일업로드 / list의 배열의크기만큼 iterate로 반복insert를 실행함. -->
+	<insert id="insertFileInfo" parameterClass="fileinfovo">
+		<selectKey keyProperty="seq" resultClass="int">
+			SELECT SEQ_FILEINFO_INO.NEXTVAL FROM DUAL
+		</selectKey>		
+		INSERT INTO FILEINFO 
+		VALUES(
+			#seq#
+			,#bno#
+			,#filename#
+			,#originalname#
+			,#filesize#
+			,#extenstion#
+			,SYSDATE		
+			)
+	</insert>
+	
+	<!-- filename을 넘겨받아서 DB에서 해당파일이름의 원본파일이름을 반환한다. -->
+	<select id="selectFileName" parameterClass="string" resultClass="string">
+		SELECT ORIGINALNAME FROM FILEINFO
+		WHERE FILENAME LIKE '%'||#filename#||'%'
+	</select>
+	
+	<!-- 게시물찾기 -->
+	<select id="selectFileInfo" parameterClass="int" resultClass="fileinfovo">
+		SELECT * FROM FILEINFO WHERE BNO = #bno#
+	</select>
+	
+</sqlMap>

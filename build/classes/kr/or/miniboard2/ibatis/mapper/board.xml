@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap      
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"      
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="board">
+	<typeAlias alias="boardVO" type="kr.or.miniboard2.board.vo.BoardVO"/>
+	
+	<!-- ******************************************************* resultMap 설정 ****************************************************** -->
+	<resultMap class="kr.or.miniboard2.board.vo.BoardVO" id="bvo">		
+		<result property="gubun"   column="BRD_GUBUN"/>
+		<result property="idx"	   column="BRD_IDX"/>
+		<result property="pidx"	   column="BRD_PIDX"/>
+		<result property="title"   column="BRD_TITLE"/>
+		<result property="content" column="BRD_CONTENT"/>
+		<result property="writer"  column="BRD_WRITER"/>
+		<result property="ip" 	   column="BRD_IP"/>
+		<result property="date"    column="BRD_DATE"/>
+		<result property="grp"     column="BRD_GRP"/>		
+		<result property="seq"     column="BRD_SEQ"/>		
+		<result property="hit" 	   column="BRD_HIT"/>
+		<result property="delck"   column="BRD_DELCK"/>		
+		<result property="filelist" column="BRD_IDX" select="board.getInfo"/>
+	</resultMap>
+	<resultMap class="kr.or.miniboard2.board.vo.BoardVO" id="bvo2" extends="bvo">
+		<result property="lvl"   column="LVL"/>		
+	</resultMap>
+	
+	<resultMap class="kr.or.miniboard2.file.vo.FileInfoVo" id="finfo">		
+		<result property="seq" column="SEQ"/>
+		<result property="bno" column="BNO"/>
+		<result property="filename" column="FILENAME"/>
+		<result property="originalname" column="ORIGINALNAME"/>
+		<result property="filesize" column="FILESIZE"/>
+		<result property="extenstion" column="EXTENSTION"/>
+		<result property="filedate" column="FILEDATE"/>
+	</resultMap>
+	
+	<!-- *********************************************************** 게시판 기능 ****************************************************** -->
+
+ 	<!-- sql내부적으로 join역할 / resultMap의 id가 finfo로 지정되어있는곳으로 값을 전달함 -->
+ 	<!-- 최종적으로 BoardVO 안의 변수명 filelist 으로 값을 전달함 / property="filelist" -->
+	<select id="getInfo" parameterClass="int" resultMap="finfo">
+		SELECT * FROM FILEINFO WHERE BNO = #idx#
+	</select>
+  	
+  	<!-- 게시판 검색을위한 동적쿼리 -->
+	 <sql id="dynamicCondition">
+	   <dynamic prepend="WHERE">
+	   	<isEqual property="gubun_ck" compareValue="check" prepend="AND">
+			BRD_GUBUN = #gubun# AND BRD_SEQ = 0
+		</isEqual>		
+	     <isNotEmpty property="stype" prepend="AND">
+	        <isEqual property="stype"  compareValue="name">
+	          BRD_WRITER like '%'||#sword#||'%'
+	        </isEqual>
+	        
+	         <isEqual property="stype"  compareValue="title">
+	           BRD_TITLE like '%'||#sword#||'%'
+	        </isEqual>
+	        
+	         <isEqual property="stype"  compareValue="cont">
+	           BRD_CONTENT like '%'||#sword#||'%'
+	        </isEqual>
+	     </isNotEmpty>
+	   </dynamic>
+	  </sql>
+   	
+   	<!-- 게시판 조회 / 검색 / 페이지 -->
+   	 <select id="listAll" parameterClass="map" resultMap="bvo">
+	   select A.* from 
+	     (select rownum as rnum , B.* from
+	        ( select * from BOARD 
+	            <include refid="dynamicCondition"/>
+	            order by  BRD_IDX desc) B 
+	          where rownum &lt;= #end#) A
+	       	  where A.rnum &gt;= #start#
+	 </select>
+	 
+	<!-- 전체 글 개수 구하기 -->
+	 <select id="listCount" parameterClass="map" resultClass="int">
+    	SELECT COUNT(*) FROM BOARD 
+      	WHERE BRD_SEQ = 0
+      	<isNotEmpty property="gubun" prepend="AND">
+      		BRD_GUBUN = #gubun#
+      	</isNotEmpty>
+ 	 </select>
+ 	
+	
+	 	
+   <!-- 게시글 입력 -->
+   <insert id="insertBoard" parameterClass="boardVO">
+   <selectKey keyProperty="idx" resultClass="int">
+      SELECT BRD_IDX_SEQ.NEXTVAL FROM DUAL
+   </selectKey>
+       INSERT INTO BOARD 
+       VALUES(
+       		 #gubun#
+             ,#idx#
+             ,#pidx#
+             ,#title#
+             ,#content#
+             ,#writer#
+             ,#ip#
+             ,sysdate
+             ,#idx#
+             ,#seq#
+             ,default
+             ,default
+            )
+ 	</insert>
+	
+	<!-- 게시글상세정보 / 업로드 파일정보까지 얻어옴 resultMap="bvo" -->
+	<select id="detailBoard" parameterClass="int" resultMap="bvo">
+	 SELECT   * 
+	 FROM     BOARD
+ 	 WHERE	 BRD_IDX = #idx#
+	</select>
+	
+	<!-- 게시글 조회수증가 -->
+	<update id="updateView" parameterClass="int">
+	 UPDATE BOARD
+	 SET    BRD_HIT = BRD_HIT+1
+ 	 WHERE  BRD_IDX = #idx#
+	</update> 
+	
+	<!-- 게시글 삭제, 댓글까지 같이 삭제됨 -->
+	<delete id="deleteBoard">
+	 DELETE FROM BOARD
+	 WHERE  BRD_GRP = #idx#
+	</delete>
+	
+	<!-- 게시글 수정 -->
+	<update id="updateBoard" parameterClass="boardVO">
+	 UPDATE BOARD
+	 SET BRD_TITLE = #title#,
+	 BRD_CONTENT  = #content#
+	 WHERE BRD_IDX = #idx#
+	</update>
+	
+	<!-- ************************************************** 댓글기능 *********************************************************** -->
+	
+	<!-- 댓글 순서 증가 -->
+	<update id="updateSEQ" parameterClass="map">
+    UPDATE BOARD SET 
+    BRD_SEQ = BRD_SEQ+1 
+    <![CDATA[
+        where BRD_GRP = #grp# and BRD_SEQ >= #seq#
+     ]]>
+ 	</update>
+	
+	<!-- 댓글 작성 -->
+	<insert id="insertReply" parameterClass="boardVO">
+   	 <selectKey keyProperty="idx" resultClass="int">
+      SELECT BRD_IDX_SEQ.NEXTVAL FROM DUAL
+  	 </selectKey>
+	INSERT INTO BOARD     
+	VALUES(
+		 #gubun#
+	     ,#idx#
+	     ,#pidx#
+	     ,#title#
+	     ,#content#
+	     ,#writer#
+	     ,#ip#
+	     ,sysdate
+	     ,#grp#
+	     ,#seq#
+	     ,default
+	     ,default
+		 )
+	</insert>
+	
+	<!-- 댓글 리스트 조회 -->
+	<select id="getReplylist" parameterClass="int" resultMap="bvo2">
+	 SELECT 
+	 ROWNUM,
+	 LEVEL AS LVL,
+	 A.*,
+	 LPAD(' ', 4* (LEVEL-1)) || BRD_CONTENT
+	 FROM BOARD A
+	 START WITH BRD_PIDX = #idx#
+	 CONNECT BY PRIOR BRD_IDX = BRD_PIDX
+    </select>		
+    	
+	<!-- 댓글 삭제 -->
+	<update id="DeleteReply" parameterClass="string" >
+    UPDATE BOARD
+    SET   BRD_DELCK = 'Y'
+    WHERE BRD_IDX = #brd_idx#
+    </update>
+    
+    
+</sqlMap>

@@ -1,0 +1,23 @@
+--테이블 스페이스 생성 및 계정생성
+
+
+
+
+--1. 테이블스페이스를 만들어준다 데이터복구 할 일이생기면 테이블스페이스가 필요
+create tablespace moon
+datafile 'C:\oraclexe\app\oracle\oradata\XE\moon.dbf' size 100M
+AUTOEXTEND on next 5M maxsize 200M;
+
+
+
+
+--2. 유저를 생성한다 생성과동시에 유저에게 테이블스페이스를 설정해준다
+create user moon identified by java
+default tablespace moon
+quota unlimited on moon;
+
+
+
+
+--3. 유저에게 접속권한과 자원을 사용할 수 있는 권한을 설정해줌.
+grant connect, resource to moon;

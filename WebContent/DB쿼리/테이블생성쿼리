@@ -1,0 +1,59 @@
+--MEMBER 테이블
+CREATE TABLE  MEMBER
+(  mem_id           VARCHAR2(20)   PRIMARY KEY,   -- 회원ID  
+   mem_pass         VARCHAR2(15)   NOT NULL,      -- 비밀번호
+   mem_name         VARCHAR2(20)   NOT NULL,      -- 성명
+   mem_sex	        VARCHAR2(10)   NOT NULL,      -- 성별   
+   mem_mail         VARCHAR2(40)   NOT NULL,      -- E-mail주소
+   mem_addr1        VARCHAR2(100)  NOT NULL,      -- 주소
+   mem_addr2        VARCHAR2(100)  NOT NULL,      -- 상세주소
+   mem_bir          VARCHAR2(10)   NOT NULL,      -- 생년월일
+   mem_phone        VARCHAR2(20)   NOT NULL,      -- 휴대폰번호   
+   mem_date         DATE DEFAULT SYSDATE          -- 회원가입일
+);
+
+--BOARD 테이블
+CREATE TABLE BOARD
+(
+  BRD_GUBUN     NUMBER NOT NULL,                 -- 게시판 구분 
+  BRD_IDX       	NUMBER PRIMARY KEY,            -- 게시글 번호
+  BRD_PIDX        NUMBER NOT NULL,				    -- 부모글번호
+  BRD_TITLE     VARCHAR2(256) NOT NULL,        -- 제목
+  BRD_CONTENT   VARCHAR2(4000) NOT NULL,   -- 내용
+  BRD_WRITER    VARCHAR2(20) NOT NULL,       -- 글쓴이  
+  BRD_IP        VARCHAR2(16) NOT NULL,           -- IP주소 
+  BRD_DATE      DATE DEFAULT SYSDATE,          -- 글 등록일자 
+  BRD_GRP       NUMBER NOT NULL,   	           -- 글 그룹   
+  BRD_SEQ       NUMBER NOT NULL,                  -- 글 순서   
+  BRD_HIT       NUMBER DEFAULT 0,                 -- 조회수  
+  BRD_DELCK     CHAR(1) DEFAULT 'N',             -- 삭제여부  
+  FOREIGN KEY(BRD_WRITER) REFERENCES MEMBER(MEM_ID) ON DELETE CASCADE
+);
+
+--BOARD 테이블 시퀀스생성
+CREATE SEQUENCE BRD_IDX_SEQ;
+
+--세션 추가및셋팅
+ALTER SESSION SET NLS_DATE_FORMAT='YY-MM-DD HH24:MI';
+                                -- 17 03 06 11:30
+--FILEINFO 테이블
+CREATE TABLE FILEINFO(
+SEQ          NUMBER PRIMARY KEY,       --파일 번호(시퀀스)
+BNO          NUMBER,                   --파일 그룹번호(부모 게시글번호에 속함)
+FILENAME     VARCHAR2(50),             --저장 파일명(변경되어저장되는 이름)
+ORIGINALNAME VARCHAR2(50),             --원본 파일명
+FILESIZE     NUMBER,                   --파일 사이즈
+EXTENSTION   VARCHAR2(10),             --파일 확장자
+FILEDATE     DATE DEFAULT SYSDATE,     --파일 등록일
+FOREIGN KEY(BNO) REFERENCES BOARD(BRD_IDX) ON DELETE CASCADE
+);
+
+--FILEINFO 테이블 시퀀스생성
+CREATE SEQUENCE SEQ_FILEINFO_INO;
+
+--VO 생성
+SELECT 'private String '||lower(column_name)||';'
+from user_tab_columns
+where table_name='MEMBER';
+
+commit;
